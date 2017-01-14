@@ -1,4 +1,4 @@
-# About Whackpad
+# About whackpad
 Whackpad is a community fork of the Hackpad web-based realtime wiki, based on the open source EtherPad collaborative document editor, which again is a fork of etherpad.
 
 As Hackpad had been unmaintained by Dropbox since 2015, we decided to create a fork to allow contributions to be gathered to keep the codebase alive.
