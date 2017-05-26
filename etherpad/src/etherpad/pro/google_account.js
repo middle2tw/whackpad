@@ -29,7 +29,7 @@ jimport("java.util.concurrent.ConcurrentHashMap");
 var DEFAULT_SCOPES = [
   "email",
   "profile",
-  "https://www.googleapis.com/auth/contacts.readonly",
+  //"https://www.googleapis.com/auth/contacts.readonly",
 ];
 
 var CLIENT_DETAILS;
