@@ -111,8 +111,6 @@ exec $JAVA -classpath $CP \
     -XX:OnOutOfMemoryError="killall -9 java" \
     -Xloggc:./data/logs/backend/jvm-gc.log \
     -Dappjet.jmxremote=true \
-    -Djavax.net.ssl.trustStore=./etc/cacerts-rds \
-    -Djavax.net.ssl.trustStorePassword=changeit \
     $JAVA_OPTS \
     net.appjet.oui.main \
     --configFile=${cfg_file} \
