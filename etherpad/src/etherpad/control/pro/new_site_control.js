@@ -31,6 +31,8 @@ import("etherpad.control.pro.admin.account_manager_control");
 import("etherpad.helpers");
 
 function render_main_get() {
+  return renderNoticeString("目前不支援新增 workspace");
+
   pro_accounts.requireAccount("Sign in to create a new Hackpad Space.");
 
   var newSiteData = getSession().newSiteData || {};
