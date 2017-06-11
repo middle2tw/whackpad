@@ -992,7 +992,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
         appjet.requestCache.padsAccessing[padId] = pad;
         var padDomainId = padutils.getDomainId(padId);
         if (padDomainId && !domains.domainIsOnThisServer(padDomainId)) {
-          log.warn("Accessing pad " + padId + " from wrong server");
+            //log.warn("Accessing pad " + padId + " from wrong server");
         }
         return padFunc(pad);
       }
