@@ -980,7 +980,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
             "viewsRecent": viewsRecent || 0
           });
 
-          search.scheduleAsyncSolrUpdate(body);
+          search.scheduleAsyncSearchUpdate(body);
 
         },
 

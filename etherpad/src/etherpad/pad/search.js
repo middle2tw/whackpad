@@ -7,7 +7,7 @@ function onStartup() {
   execution.initTaskThreadPool("async-pad-indexer", 1);
 }
 
-function scheduleAsyncSolrUpdate(body) {
+function scheduleAsyncSearchUpdate(body) {
   execution.scheduleTask('async-pad-indexer', 'performAsyncUpdate', 0, [body]);
 }
 
