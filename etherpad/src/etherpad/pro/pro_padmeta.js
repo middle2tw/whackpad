@@ -75,7 +75,7 @@ function accessProPad(globalPadId, fn) {
         padRecord.isDeleted = false;
         padRecord.deletedDate = null;
         isDirty = true;
-        model.updateSolrIndexForPad(globalPadId);
+        model.updateSearchIndexForPad(globalPadId);
       },
       getPassword: function() { return padRecord.password; },
       setPassword: function(newPass) {

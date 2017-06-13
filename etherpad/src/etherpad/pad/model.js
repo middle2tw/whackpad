@@ -1219,7 +1219,7 @@ function rollforwardToRevNum(padId, revNum, opt_skipChecks) {
   });
 }
 
-function updateSolrIndexForPad(globalPadId) {
+function updateSearchIndexForPad(globalPadId) {
   accessPadGlobal(globalPadId, function(pad) {
     pad.updateSolrIndex();
   }, 'r');

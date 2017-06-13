@@ -22,7 +22,7 @@ function _setPadVisibility(globalPadId, visibility) {
   pro_padmeta.accessProPad(globalPadId, function(propad) {
     propad.setVisibility(visibility);
   })
-  model.updateSolrIndexForPad(globalPadId);
+  model.updateSearchIndexForPad(globalPadId);
 }
 
 function listHiddenPads(limit, excludePadIds) {

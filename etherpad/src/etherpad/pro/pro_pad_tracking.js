@@ -68,7 +68,7 @@ serverhandlers.tasks.dailyPadViewCountIndexer = function() {
       var globalPadId = padutils.makeGlobalId(rows[i].domainId, rows[i].localPadId);
       try {
         model.accessPadGlobal(globalPadId, function(pad) {
-          model.updateSolrIndexForPad(globalPadId);
+          model.updateSearchIndexForPad(globalPadId);
           // flush the pad if it's freshly loaded
           if (!pad._meta.status.lastAccess) {
             dbwriter.writePadNow(pad, true/*and flush*/);

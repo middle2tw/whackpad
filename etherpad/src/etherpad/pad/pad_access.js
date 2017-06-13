@@ -201,7 +201,7 @@ function grantGroupIdAccess(globalPadId, groupId, hostUserId, optSkipSolrUpdate)
   sqlobj.insert('pad_access', data);
 
   if (!optSkipSolrUpdate) {
-    model.updateSolrIndexForPad(globalPadId);
+    model.updateSearchIndexForPad(globalPadId);
   }
 }
 
@@ -216,7 +216,7 @@ function revokeGroupIdAccess(globalPadId, groupId, hostUserId) {
   };
   sqlobj.insert('pad_access', data);
 
-  model.updateSolrIndexForPad(globalPadId);
+  model.updateSearchIndexForPad(globalPadId);
 }
 
 function copyAccessFromPadToPad(sourcePadId, targetPadId, hostUserId) {

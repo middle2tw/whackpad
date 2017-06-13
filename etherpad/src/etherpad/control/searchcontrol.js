@@ -488,7 +488,7 @@ serverhandlers.tasks.reindexPadsBatch = function(firstPadId, count) {
 
     try {
       model.accessPadGlobal(globalPadId, function(pad) {
-        model.updateSolrIndexForPad(globalPadId);
+        model.updateSearchIndexForPad(globalPadId);
         appjet.cache.padsReindexed += 1;
 
         if (collab_server.getNumConnections(pad) > 0) {
