@@ -38,7 +38,7 @@ function listPublicPads(limit, excludePadIds, optVisibility) {
   });
 
   var domainId = domains.getRequestDomainId();
-  request.profile.tick("Before solr public pad fetch");
+  request.profile.tick("Before search public pad fetch");
   var publicPads = searchcontrol.getPublicPads(0, excludePadIds.length + limit, {visibility: optVisibility, domains: [domainId]});
 
   publicPads = publicPads.filter(function(pad) {
@@ -58,7 +58,7 @@ function listGlobalPublicPads(limit, excludeGlobalPadIds, optVisibility) {
 
   request.profile.tick("Before getting public domains");
   var publicDomains = domains.getPublicDomainsHash();
-  request.profile.tick("Before solr public pad fetch");
+  request.profile.tick("Before search public pad fetch");
   var publicPads = searchcontrol.getPublicPads(0, excludeGlobalPadIds.length + limit, {visibility: optVisibility});
 
   publicPads = publicPads.filter(function(pad) {
