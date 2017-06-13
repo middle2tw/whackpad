@@ -323,14 +323,14 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
 
           padevents.onNewPad(pad, optTitle);
         },
-        destroy: function(delaySolrCommit) { // you may want to collab_server.bootAllUsers first
+        destroy: function(delaySearchCommit) { // you may want to collab_server.bootAllUsers first
           padevents.onDestroyPad(pad);
 
           var body = renderTemplateAsString('solr/delete.ejs', {
             "id": padId
           });
 
-          var commitParam = delaySolrCommit ? "" : "commit=true";
+          var commitParam = delaySearchCommit ? "" : "commit=true";
           urlPost("http://" + appjet.config.solrHostPort + "/solr/update?" + commitParam, body,
                   { "Content-Type": "text/xml; charset=utf-8" });
 
