@@ -40,24 +40,24 @@ limitations under the License. */ %>
 
   <% if (isDogfood()) { %>
     <script nonce="<%= helpers.cspNonce() %>">
-      function printSolrScoreInfo() {
-        var solrDebug = clientVars.solrDebugInfo;
-        for (var padId in solrDebug.explain) {
-          window.console.log(padId+": \n"+solrDebug.explain[padId]);
+      function printSearchScoreInfo() {
+        var searchDebug = clientVars.searchDebugInfo;
+        for (var padId in searchDebug.explain) {
+          window.console.log(padId+": \n"+searchDebug.explain[padId]);
         }
       }
-      function printSolrTimingInfo() {
-        var solrDebug = clientVars.solrDebugInfo;
-        var timingInfo = "timing: " + solrDebug.timing.time;
+      function printSearchTimingInfo() {
+        var searchDebug = clientVars.searchDebugInfo;
+        var timingInfo = "timing: " + searchDebug.timing.time;
         var propsString = ['prepare','process'].map(function(t){
-          var o = solrDebug.timing[t];
+          var o = searchDebug.timing[t];
           var vals = ['query', 'facet', 'highlight', 'debug', 'stats'].map(function(key){
             return key+": "+o[key].time;
           }).join("\n\t\t");
           return t + ": " + o.time + "\n\t\t" + vals;
         }).join("\n\t");
 
-        var timingInfo = "timing: " + solrDebug.timing.time + "\n\t" + propsString;
+        var timingInfo = "timing: " + searchDebug.timing.time + "\n\t" + propsString;
         window.console.log(timingInfo);
       }
     </script>

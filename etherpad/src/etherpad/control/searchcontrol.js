@@ -190,7 +190,7 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
   if (results) {
     if (isDogfood() && results['debug']) {
       debugInfo = results['debug'];
-      helpers.addClientVars({solrDebugInfo: debugInfo});
+      helpers.addClientVars({searchDebugInfo: debugInfo});
     }
     hits = results['response']['docs'];
     numFound = results['response']['numFound'];
