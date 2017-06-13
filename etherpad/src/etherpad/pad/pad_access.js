@@ -190,7 +190,7 @@ function revokeUserIdAccess(globalPadId, userId, hostUserId) {
 }
 
 
-function grantGroupIdAccess(globalPadId, groupId, hostUserId, optSkipSolrUpdate) {
+function grantGroupIdAccess(globalPadId, groupId, hostUserId, optSkipSearchUpdate) {
   var data = {
     globalPadId: globalPadId,
     hostUserId: hostUserId,
@@ -200,7 +200,7 @@ function grantGroupIdAccess(globalPadId, groupId, hostUserId, optSkipSolrUpdate)
   };
   sqlobj.insert('pad_access', data);
 
-  if (!optSkipSolrUpdate) {
+  if (!optSkipSearchUpdate) {
     model.updateSearchIndexForPad(globalPadId);
   }
 }
