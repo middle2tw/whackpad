@@ -376,7 +376,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
 
           // only update SOLR for pro-pads
           if (padutils.isProPadId(padId)) {
-            pad.updateSolrIndex();
+            pad.updateSearchIndex();
           }
         },
         pool: function() {
@@ -894,7 +894,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
           var cs = pad.getChangesetBetweenRevisions(from, to);
           return pad.getDiffATextForChangeset(cs, from, includeDeletes);
         },
-        updateSolrIndex: function() {
+        updateSearchIndex: function() {
           var atext = pad.atext();
           var title = "";
           var isDeleted = false;
@@ -1221,7 +1221,7 @@ function rollforwardToRevNum(padId, revNum, opt_skipChecks) {
 
 function updateSearchIndexForPad(globalPadId) {
   accessPadGlobal(globalPadId, function(pad) {
-    pad.updateSolrIndex();
+    pad.updateSearchIndex();
   }, 'r');
 }
 
