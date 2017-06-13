@@ -88,12 +88,6 @@ import("etherpad.importexport.dropbox");
 jimport("java.lang.System.out.println");
 
 serverhandlers.startupHandler = function() {
-  var trueRegex = /\s*true\s*/i;
-  if (trueRegex.test(appjet.config.solrOnly)) {
-    println("Starting dedicated Solr instance");
-    return;
-  }
-
   // Order matters.
   checkSystemRequirements();
 
@@ -137,12 +131,6 @@ serverhandlers.resetHandler = function() {
 
 serverhandlers.shutdownHandler = function() {
   appjet.cache.shutdownHandlerIsRunning = true;
-
-  var trueRegex = /\s*true\s*/i;
-  if (trueRegex.test(appjet.config.solrOnly)) {
-    println("Stopping dedicated Solr instance");
-    return;
-  }
 
   log.callCatchingExceptions(writeSessionsToDisk);
   log.callCatchingExceptions(dbwriter.onShutdown);
