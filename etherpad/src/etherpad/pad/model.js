@@ -20,7 +20,7 @@ import("sqlbase.sqlcommon");
 import("sqlbase.sqlobj");
 import("timer");
 import("sync");
-import("netutils.urlPost");
+import("netutils.urlRequest");
 import("dateutils");
 
 import("etherpad.collab.ace.easysync2.{Changeset,AttribPool}");
@@ -326,13 +326,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
         destroy: function(delaySearchCommit) { // you may want to collab_server.bootAllUsers first
           padevents.onDestroyPad(pad);
 
-          var body = renderTemplateAsString('solr/delete.ejs', {
-            "id": padId
-          });
-
-          var commitParam = delaySearchCommit ? "" : "commit=true";
-          urlPost("http://" + appjet.config.solrHostPort + "/solr/update?" + commitParam, body,
-                  { "Content-Type": "text/xml; charset=utf-8" });
+          urlRequest('DELETE', appjet.config.elasticURL + "/etherpad/" + encodeURIComponent(padId));
 
           _destroyPadStringArray(padId, "revs");
           _destroyPadStringArray(padId, "revs10");
@@ -374,7 +368,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
           // cache now to speed up padlisting
           pad.getTaskCounts();
 
-          // only update SOLR for pro-pads
+          // only update Search for pro-pads
           if (padutils.isProPadId(padId)) {
             pad.updateSearchIndex();
           }
@@ -952,16 +946,14 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
             }
           });
 
-          text = text.replace(XML_UNSAFE_CHARS_RE, '');
-
-          // index in /solr/update
-          var body = renderTemplateAsString('solr/update.ejs', {
+          var body = {
             "id": padId,
             "domainId": padutils.getDomainId(padId),
             "lastedit": dateutils.dateFormat(revDate, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
             "tlastedit": dateutils.dateFormat(revDate, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
             "revision": meta.head,
             "contents": text,
+            "terms": text.replace(/#/g, 'ht_'),
             "chat": [],      // XXX
             "deleted": false,
             "invitedId": invitedIds,
@@ -978,7 +970,7 @@ function accessPadGlobal(padId, padFunc, rwMode, skipAccessCheck) {
             "visibility": visibility,
             "viewsTotal": viewsTotal || 0,
             "viewsRecent": viewsRecent || 0
-          });
+          };
 
           search.scheduleAsyncSearchUpdate(body);
 

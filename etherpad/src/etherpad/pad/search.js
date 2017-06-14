@@ -1,6 +1,6 @@
 import("execution");
 import("etherpad.log");
-import("netutils.urlPost");
+import("netutils.urlRequest");
 
 
 function onStartup() {
@@ -13,9 +13,7 @@ function scheduleAsyncSearchUpdate(body) {
 
 serverhandlers.tasks.performAsyncUpdate = function(body) {
   try {
-    urlPost("http://" + appjet.config.solrHostPort + "/solr/update", body,
-          { "Content-Type": "text/xml; charset=utf-8",
-          connectTimeout: 1*1000, readTimeout: 2*1000});
+    urlRequest('PUT', appjet.config.elasticURL + "/etherpad/" + encodeURIComponent(body.id), JSON.stringify(body));
   } catch (ex) {
     log.logException(ex);
   }

@@ -3,8 +3,7 @@ import("execution");
 import("fastJSON");
 import("jsutils");
 import("dateutils");
-import("netutils.urlGet");
-import("netutils.urlPost");
+import("netutils.urlRequest");
 import("stringutils.trim");
 import("stringutils.toHTML");
 
@@ -34,7 +33,6 @@ import("etherpad.changes.changes");
 import("etherpad.pad.padusers");
 jimport("net.sf.json.JSONNull");
 
-var ESCAPE_SOLR_CHARS_RE = new RegExp(/([!\+\-&\|\(\)\{\}\[\]\^~\*\?:\\])/g);
 function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowNewLinesInSnippets, optFilterGroupId, optFilterAuthorId, optFilterLastEdit, optFacet) {
   var uid = getSessionProAccount() && getSessionProAccount().id;
   var isDomainGuest = getSessionProAccount() && pro_accounts.getIsDomainGuest(getSessionProAccount());
@@ -81,7 +79,7 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
     filterQueryList.push("lastedit:[NOW-" + optFilterLastEdit + "DAYS TO NOW]");
   }
 
-  var userQuery = trim(q).replace(ESCAPE_SOLR_CHARS_RE, "\\$1");
+  var userQuery = trim(q);
   // ensure an even number of quotes
   var parts = userQuery.split('"');
   if (parts.length % 2 == 0) {
@@ -95,7 +93,7 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
   var preTag = '0941B8FA-35D9-442C-9BC7-21FB19A0716D';
   var postTag = 'AD1488AB-59B9-481B-B09F-0CCC625F63E0';
 
-  request.profile.tick('before solr');
+  request.profile.tick('before search');
 
   var boosts = [];
   // The boost function is adapted from recommendations seen here
@@ -132,53 +130,54 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
   var boostFn = "product("+boosts.join(",")+")";
 
   // todo: this is probably too expensive at scale
-  var solrParams = {
-    "wt": "json",
-    "defType": "edismax",
-    "q":userQuery,
-    "q.op": "AND",
-    "fq": filterQueryList,
-    "qf": "title^2 contents", // DisMaxQParserPlugin query fields
-    "pf": "title^2 contents", // DisMaxQParserPlugin phrase fields
-    "boost": boostFn,
-    "rows": limit,
-    "start": start,
-    "hl": true,
 
-    // TODO: Play around with these to try to get correct highlighting,
-    //       defined as each snippet containing (at least) a the full line text of
-    //       a line with matches in it.
-    //       See http://wiki.apache.org/solr/HighlightingParameters for bad docs
-    // NOTE: hl.useFastVectorHighlighter requires a reindex, and only works on schema fields
-    //       with termVectors, termPositions, and termOffsets turned on.
-    //       Anecdotally it feels faster, btw ;-)
+  var query = {
+    filtered: {
+      query: { query_string: {query: userQuery} },
+      filter: {
+        and: []
+      }
+    },
+  };
 
-    //"hl.useFastVectorHighlighter": true,
-    //"hl.boundaryScanner": "breakIterator",
-    "hl.snippets": optSnippetCnt || 3,
-    "hl.fragsize": optSnippetMaxSize || 80,
-    "hl.bs.type": "SENTENCE",
-    "hl.tag.pre": preTag,
-    "hl.tag.post": postTag,
-    "hl.simple.pre": preTag,
-    "hl.simple.post": postTag,
-    "hl.fl": "contents",
-    "debugQuery":isDogfood(),
+  query.filtered.filter.and = filterQueryList.map(function(q) {
+    return {query: {query_string: {query: q}}};
+  });
+
+  var searchParams = { };
+  searchParams.size = limit;
+  searchParams.from = start;
+  searchParams.query = query;
+  /*searchParams.query = {
+    function_score: {
+      query: query,
+      script_score: { script: { inline: boostFn }}
+    }
+  };*/
+  searchParams.highlight = {
+    pre_tags: [preTag],
+    post_tags: [postTag],
+    boundary_scanner: 'SENTENCE',
+    fields: {
+      contents: {
+        fragment_size: optSnippetMaxSize || 80,
+        number_of_fragments: optSnippetCnt || 3,
+      }
+    }
   };
 
   if (optFacet) {
-    solrParams = jsutils.extend(solrParams, {
-      // facets
-      "facet": true,
-      "facet.field": ["{!ex=invitedGroupId,authorId}invitedGroupId",
-                      "{!ex=invitedGroupId,authorId}authorId"],
-      "facet.limit": 10,
-      "facet.mincount": 1,
-      "fl": "id,title,lastedit,creatorId,lastEditorId"
-    });
+    searchParams.facets = {
+      hackpad_facet : {
+        terms: {
+          fields: ["{!ex=invitedGroupId,authorId}invitedGroupId", "{!ex=invitedGroupId,authorId}authorId"],
+          size: 10,
+        }
+      }
+    };
   }
 
-  var results = _doSolrQuery(solrParams);
+  var results = _doSearchQuery(searchParams);
 
   var hits = [];
   var highlighting = {};
@@ -192,19 +191,18 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
       debugInfo = results['debug'];
       helpers.addClientVars({searchDebugInfo: debugInfo});
     }
-    hits = results['response']['docs'];
-    numFound = results['response']['numFound'];
-    highlighting = results['highlighting'];
+    hits = results['hits']['hits'];
+    numFound = results['hits']['total'];
     if (optFacet) {
-      invitedGroupIds = results['facet_counts']['facet_fields']['invitedGroupId'];
-      authorIds = results['facet_counts']['facet_fields']['authorId'];
+      //invitedGroupIds = results['facets']['facet_fields']['invitedGroupId'];
+      //authorIds = results['facet_counts']['facet_fields']['authorId'];
     }
   }
 
   var list = [];
   for (var i=0; i<hits.length && i<limit; i++) {
-    var id = hits[i].id;
-    var title = hits[i].title;
+    var id = hits[i]._source.id;
+    var title = hits[i]._source.title;
     // handle null titles gracefully, apparently JSONNull evaluates as truthy!
     if (title instanceof net.sf.json.JSONNull || !title) {
       title = '';
@@ -212,10 +210,11 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
       title = helpers.escapeHtml(title);
     }
     var snippet = '';
+    var highlighting = hits[i].highlight;
 
-    if (highlighting[id] && highlighting[id].contents) {
-      for (var j in highlighting[id].contents) {
-        var aSnippet = highlighting[id].contents[j];
+    if (highlighting && highlighting.contents) {
+      for (var j in highlighting.contents) {
+        var aSnippet = highlighting.contents[j];
         //log.info("aSnippet='" + aSnippet + "'");
 
         // trim to char after first newline before first preTag
@@ -239,7 +238,7 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
 
     var lastEditedDate;
     try {
-      lastEditedDate = dateutils.dateParse(hits[i].lastedit, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+      lastEditedDate = dateutils.dateParse(hits[i]._source.lastedit, "yyyy-MM-dd'T'HH:mm:ss'Z'")
     } catch (ex) {
       log.warn("lastedit date parsing failed in search: "+ex);
     }
@@ -251,8 +250,8 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
       domainId: padutils.getDomainId(id),
       snippet: snippet,
       lastEditedDate: lastEditedDate,
-      lastEditorId: hits[i].lastEditorId,
-      creatorId: hits[i].creatorId
+      lastEditorId: hits[i]._source.lastEditorId,
+      creatorId: hits[i]._source.creatorId
     });
   }
 
@@ -532,20 +531,13 @@ function render_flush_deleted_both() {
   if (request.params.limit) {
     end = Math.min(start + parseInt(request.params.limit), end);
   }
-  var body = "<delete>";
 
   for (var i=start; i<end; i++) {
     var ppadRow = ppadRows[i];
     var globalPadId = padutils.makeGlobalId(ppadRow.domainId, ppadRow.localPadId);
 
-    body += "<id>"+globalPadId+ "</id>";
-    response.write(globalPadId + "<br/>");
+    response.write(urlRequest("DELETE", appjet.config.elasticURL + "/etherpad/" + encodeURIComponent(globalPadId)));
   }
-
-  body += "</delete>";
-
-  response.write(urlPost("http://" + appjet.config.solrHostPort + "/solr/update", body,
-    { "Content-Type": "text/xml; charset=utf-8" }).status);
 
   return true;
 }
@@ -577,46 +569,13 @@ function render_hashtags_get() {
 }
 
 function getHashtags(authorFilterId, query) {
-  var filterQueryList = ["domainId:" + domains.getRequestDomainId()];
-  var userQuery = trim(query||"").replace(ESCAPE_SOLR_CHARS_RE, "\\$1");
-
-  var results = _doSolrQuery({
-    "wt": "json",
-    "fq": filterQueryList,
-    "q": "terms:ht_*" + (authorFilterId ? " AND authorId:" + authorFilterId : ""),
-    "rows": 0,
-    "facet": true,
-    "facet.field": "terms",
-    "facet.prefix": "ht_" + userQuery,
-    "facet.mincount": 1,
-    "facet.method": "enum"
-  });
-
-  var terms = {};
-  if (results) {
-    termcounts = results['facet_counts']['facet_fields']['terms'];
-    while(termcounts.length) {
-      var ht = termcounts.shift();
-      var htcount = termcounts.shift();
-      if (ht.match(/^ht_[0-9]+$/)) {
-        continue; // hack: skip number-only hashtags
-      }
-      if (ht.match(/^ht_ht_/)) {
-        continue; // hack: ##+ aren't hashtags
-      }
-      if (ht.match(/^ht_\S{0,1}$/)) {
-        continue; // skip 0 and 1 character hashtags
-      }
-      terms[ht.replace(/^ht_/, '#')] = htcount;
-    }
-  }
-  return terms;
+  return {}; // TODO
 }
 
 
-function _doSolrQuery(params) {
-  var solrUrl = "http://" + appjet.config.solrHostPort + "/solr/select";
-  var resp = urlPost(solrUrl, params, undefined /* options */, true /* acceptErrorCodes */);
+function _doSearchQuery(params) {
+  var searchUrl = appjet.config.elasticURL + "/etherpad/_search";
+  var resp = urlRequest("POST", searchUrl, JSON.stringify(params), undefined /* headers */, 30 /* timeout */, true /* acceptErrorCodes */);
   if (resp.status == 200) {
     var respObj = fastJSON.parse(resp.content);
     return respObj;
@@ -624,7 +583,7 @@ function _doSolrQuery(params) {
     var errMsg;
     try {
       var respObj = fastJSON.parse(resp.content);
-      errMsg = respObj.error.msg;
+      errMsg = respObj.error;
     } catch(ex) {
       errMsg = resp.content;
     }
@@ -655,20 +614,30 @@ function getPublicPads(start, limit, opts) {
     filterQueryList.push("visibility:hidden");
   }
 
-  var results = _doSolrQuery({
-    "wt": "json",
-    "fq": filterQueryList,
-    "q": "*",
-    "defType":"edismax",
-    "boost": "sum(1,recip(rord(lastedit),1,1000,1000))",
-    "rows": limit || 100,
-    "start": start || 0,
+  var query = {
+    filtered: {
+      query: { query_string: {query: '*'} },
+      filter: {
+        and: []
+      }
+    },
+  };
+
+  query.filtered.filter.and = filterQueryList.map(function(q) {
+    return {query: {query_string: {query: q}}};
   });
+
+  var searchParams = { };
+  searchParams.size = limit || 100;
+  searchParams.from = start || 0;
+  searchParams.query = query;
+  var results = _doSearchQuery(searchParams);
 
   var padObjects = [];
   if (results) {
-    var pads = results['response']['docs'];
+    var pads = results['hits']['hits'];
     pads.forEach(function(pad) {
+      pad = pad._source;
       if (pad.revision >= 40) {
         padObjects.push({
           globalPadId: pad.id,
