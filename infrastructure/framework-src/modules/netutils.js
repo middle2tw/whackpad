@@ -104,6 +104,20 @@ function urlPut(url0, fileData, params, headers, timeout, acceptErrorCodes) {
   return _processResponse(conn, acceptErrorCodes);
 }
 
+function urlRequest(method, url, data, headers, timeout, acceptErrorCodes) {
+  var timeout = timeout || 30;
+
+  var url = new java.net.URL(url);
+  var conn = url.openConnection();
+
+  _configureURLConnection(conn, method, timeout, headers);
+
+  var dataBytes = (new java.lang.String(data)).getBytes("UTF-8");
+  conn.getOutputStream().write(dataBytes);
+
+  return _processResponse(conn, acceptErrorCodes);
+}
+
 function _cookiesBeingSet(conn) {
   var cookieList = [];
   var cookieJavaList = conn.getHeaderFields().get((new java.lang.String("Set-Cookie")));
