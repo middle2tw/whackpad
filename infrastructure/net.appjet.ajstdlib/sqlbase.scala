@@ -57,6 +57,7 @@ class SQLBase(driverClass: String, url: String, userName: String, password: Stri
     cpds.setPassword(password);
   }
 
+  cpds.setIdleConnectionTestPeriod(30);
   cpds.setMaxPoolSize(config.jdbcPoolSize);
   cpds.setMaxConnectionAge(6*60*60); // 6 hours
   if (config.devMode) {
