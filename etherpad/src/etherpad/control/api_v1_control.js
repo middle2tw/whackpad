@@ -47,6 +47,7 @@ function onRequest() {
     ['/api/1.0/options', render_v1_options_get],
 
     ['/api/1.0/pad/create', render_v1_create_pad_post],
+    ['/api/1.0/group/create', render_v1_create_group_post],
 
     [/^\/api\/1\.0\/pad\/([^\/]+)\/title$/, render_v1_get_title_get],
     [/^\/api\/1\.0\/pad\/([^\/]+)\/permissions$/, render_v1_get_permissions_get],
@@ -66,6 +67,7 @@ function onRequest() {
     [/^\/api\/1\.0\/am-i-an-admin$/, render_v1_am_i_workspace_admin_get],
     [/^\/api\/1\.0\/all-pads-in-domain$/, render_v1_get_all_pads_in_domain_get],
     [/^\/api\/1\.0\/all-users-in-domain$/, render_v1_get_all_users_in_domain_get],
+    [/^\/api\/1\.0\/all-groups-in-domain$/, render_v1_get_all_groups_in_domain_get],
 
     ['/api/1.0/pads/all', render_v1_list_all_pads_get],
 
@@ -112,6 +114,25 @@ function _setPadContentFromRequest(pad) {
       collab_server.setPadText(pad, request.content);
       break;
   }
+}
+
+function render_v1_create_group_post() {
+
+  var apiAccount = pro_oauth.getAuthorizedRequestApiAccount();
+
+  if (!apiAccount.isAdmin) {
+    return false;
+  }
+  var creatorId = apiAccount.id;
+  if (request.params.creatorId) {
+    creatorId = creatorId;
+  }
+
+  var groupId = pro_groups.createGroup(
+    creatorId, name, parseInt(request.params.isPublic), apiAccount.domainId
+  );
+
+  return renderJSON({groupId:groupId});
 }
 
 function render_v1_create_pad_post() {
@@ -355,6 +376,20 @@ function render_v1_get_all_pads_in_domain_get() {
     return row.localPadId;
   });
   return renderJSON({pads: localPadIds});
+}
+
+function render_v1_get_groups_pads_in_domain_get() {
+  if (!request.isGet) {
+    return false;
+  }
+
+  var apiAccount = pro_oauth.getAuthorizedRequestApiAccount();
+  if (!apiAccount || !apiAccount.isAdmin) {
+    return false;
+  }
+
+  var groups = sqlobj.selectMulti('pro_groups', {domainId: apiAccount.domainId});
+  return renderJSON({groups : groups});
 }
 
 function render_v1_pad_metadata_get(localPadId) {
