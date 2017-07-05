@@ -26,8 +26,8 @@ import("etherpad.collab.ace.contentcollector.makeContentCollector");
 import("etherpad.collab.ace.linestylefilter");
 import("etherpad.collab.collab_server");
 
-function setPadHTML(pad, html) {
-  var atext = htmlToAText(html, pad.pool());
+function setPadHTML(pad, html, preserveAuthors) {
+  var atext = htmlToAText(html, pad.pool(), preserveAuthors);
   collab_server.setPadAText(pad, atext);
 }
 

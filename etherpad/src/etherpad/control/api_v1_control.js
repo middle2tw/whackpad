@@ -100,7 +100,7 @@ function _setPadContentFromRequest(pad) {
       // let's wait for someone to ask before turning on authorship preservation
       // we need a better scheme for preventing blatant impersonation and datamining
       // this makes it the *tiniest* bit harder
-      importhtml.setPadHTML(pad, request.content, false /*preserve authorship*/);
+      importhtml.setPadHTML(pad, request.content, true /*preserve authorship*/);
       break;
     case "text/x-web-markdown":
       var md = new Markdown.Converter();
@@ -150,11 +150,9 @@ function render_v1_create_pad_post() {
 function render_v1_set_content_post(padId) {
 
   var apiAccount = pro_oauth.getAuthorizedRequestApiAccount();
-  var setCreatorId = false;
   padutils.accessPadLocal(padId, function(pad) {
     if (!pad.exists()){
       pad.create();
-      setCreatorId = true;
     }
     _setPadContentFromRequest(pad);
   });
@@ -162,11 +160,23 @@ function render_v1_set_content_post(padId) {
   var globalId = padutils.getGlobalPadId(padId);
   var userAccount = pro_accounts.getApiProAccount();
   pro_padmeta.accessProPad(globalId, function(ppad) {
-    if (setCreatorId) {
-      ppad.setCreatorId(userAccount.id);
+    if (request.params.creatorId) {
+      ppad.setCreatorId(parseInt(request.params.creatorId));
     }
-    ppad.setLastEditor(userAccount.id);
-    ppad.setLastEditedDate(new Date());
+    if (request.params.createdDate) {
+      ppad.setCreatedDate(new Date(parseInt(request.params.createdDate) * 1000));
+    }
+    if (request.params.lastEditorId) {
+      ppad.setLastEditor(parseInt(request.params.lastEditorId));
+    }
+    if (request.params.lastEditedDate) {
+      ppad.setLastEditedDate(new Date(parseInt(request.params.lastEditedDate) * 1000));
+    }
+    if (request.params.editors) {
+      request.params.editors.map(function(editorId){
+        ppad.addEditor(parseInt(editorId));
+      });
+    }
   });
   return renderJSON({ success: true });
 }
