@@ -378,7 +378,7 @@ function render_v1_get_all_pads_in_domain_get() {
   return renderJSON({pads: localPadIds});
 }
 
-function render_v1_get_groups_pads_in_domain_get() {
+function render_v1_get_all_groups_in_domain_get() {
   if (!request.isGet) {
     return false;
   }
