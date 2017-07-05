@@ -129,7 +129,7 @@ function render_v1_create_group_post() {
   }
 
   var groupId = pro_groups.createGroup(
-    creatorId, name, parseInt(request.params.isPublic), apiAccount.domainId
+    creatorId, request.params.name, parseInt(request.params.isPublic), apiAccount.domainId
   );
 
   return renderJSON({groupId:groupId});
