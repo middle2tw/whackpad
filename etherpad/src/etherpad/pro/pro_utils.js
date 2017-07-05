@@ -154,7 +154,7 @@ function getFullSuperdomainHost() {
   if (isProDomainRequest()) {
     var h = getRequestSuperdomain()
     var parts = request.host.split(':');
-    if (parts.length > 1) {
+    if (parts.length > 1 && parts[0] != '0') {
       h += (':' + parts[1]);
     }
     return h;
