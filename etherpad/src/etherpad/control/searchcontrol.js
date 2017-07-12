@@ -459,30 +459,34 @@ function render_search_live_get() {
 
 
 function render_reindex_both () {
-  pro_accounts.requireAdminAccount();
+	//pro_accounts.requireAdminAccount();
 
   appjet.cache.padsReindexed = 0;
   appjet.cache.padsReindexedStart = new Date();
-  execution.scheduleTask('indexer', 'reindexPadsBatch', 0, [0, 1000]);
+  appjet.cache.padsReindexedCurrent = 0;
+  var domainId = domains.getRequestDomainId();
+  execution.scheduleTask('indexer', 'reindexPadsBatch', 0, [domainId]);
   response.write("Ok");
 }
 
 function render_reindex_status_get () {
   var status = "Pads reindexed: "+appjet.cache.padsReindexed || "None";
   status += "\nTime elapsed: "+ appjet.cache.padsReindexedTimeElapsed;
+  status += "\nCurrent: " + appjet.cache.padsReindexedCurrent;
   response.write(status);
 }
 
-serverhandlers.tasks.reindexPadsBatch = function(firstPadId, count) {
+serverhandlers.tasks.reindexPadsBatch = function(domainId) {
   // re-index count pads and schedule the next batch
-  var rows = sqlobj.selectMulti('pro_padmeta', {id: ['between', [firstPadId, firstPadId+count-1]], isDeleted: false, isArchived: false});
+  var rows = sqlobj.selectMulti('pro_padmeta', {domainId: domainId, isDeleted: false, isArchived: false});
   if (!rows.length) {
     return;
   }
   for (var i=0; i<rows.length; i++) {
     if (isProduction() && !domains.domainIsOnThisServer(rows[i].domainId)) {
-      continue;
+      //continue;
     }
+    appjet.cache.padsReindexedCurrent = rows[i].id;
     var globalPadId = padutils.makeGlobalId(rows[i].domainId, rows[i].localPadId);
 
     try {
@@ -616,7 +620,7 @@ function getPublicPads(start, limit, opts) {
 
   var query = {
     filtered: {
-      query: { query_string: {query: '*'} },
+      query: { match_all: {} },
       filter: {
         and: []
       }
