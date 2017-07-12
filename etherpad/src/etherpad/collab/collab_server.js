@@ -287,9 +287,9 @@ function applyUserChanges(pad, baseRev, changeset, optSocketId, optAuthor) {
           type: "padtitle", title: newTitle } });
       });
       // what he said ^ :)
-      /*pro_padmeta.accessProPad(pad.getId(), function(propad) {
+      pro_padmeta.accessProPad(pad.getId(), function(propad) {
         propad.setTitle(newTitle);
-      });*/
+      });
     }
   }
 
@@ -514,6 +514,14 @@ function setPadAText(pad, atext, opt_apool, optAuthor) {
   Changeset.checkRep(cs);
 
   _applyChangesetToPad(pad, cs, optAuthor);
+  var newText = pad.text();
+  newTitle = trim(newText.substring(0, newText.indexOf('\n')));
+  newTitle = newTitle.replace(/^\*/, '');
+  newTitle = newTitle.substring(0, pro_padmeta.MAX_TITLE_LENGTH);
+
+  pro_padmeta.accessProPad(pad.getId(), function(propad) {
+    propad.setTitle(newTitle);
+  });
 }
 
 function applyChangesetToPad(pad, changeset) {
