@@ -332,7 +332,10 @@ function addPadToCollection(collectionId, localPadId, hostId, quietly) {
   var name = getGroupInfo(collectionId).name;
   var ids = getGroupMemberIds(collectionId);
 
-  collab_server.announceGroupInvite(padutils.getGlobalPadId(localPadId), collectionId, name, ids.length);
+  if (!quietly) { 
+    collab_server.announceGroupInvite(padutils.getGlobalPadId(localPadId), collectionId, name, ids.length);
+  }
+
 
   if (!quietly) {
     _notifyCollectionFollowersOfNewPad(collectionId, localPadId, ids, name);
