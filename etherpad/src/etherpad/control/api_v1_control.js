@@ -61,6 +61,7 @@ function onRequest() {
     [/^\/api\/1\.0\/pad\/([^\/]+)\/revert\-to\/(\d+)$/, render_v1_pad_revert_post],
     [/^\/api\/1\.0\/pad\/([^\/]+)\/revisions$/, render_v1_pad_revisions_get],
     [/^\/api\/1\.0\/pad\/([^\/]+)\/revoke-access\/(.+)$/, render_v1_pad_revoke_access_post],
+    [/^\/api\/1\.0\/pad\/([^\/]+)\/add-group\/(.+)$/, render_v1_pad_add_group_post],
     [/^\/api\/1\.0\/pad\/([^\/]+)\/export-info$/, render_v1_pad_export_info_get],
 
 
@@ -175,6 +176,9 @@ function render_v1_set_content_post(padId) {
     if (!pad.exists()){
       pad.create();
     }
+    if (request.params.guestPolicy) {
+      pad.setGuestPolicy(request.params.guestPolicy);
+    }
     _setPadContentFromRequest(pad);
   });
 
@@ -194,7 +198,7 @@ function render_v1_set_content_post(padId) {
       ppad.setLastEditedDate(new Date(parseInt(request.params.lastEditedDate) * 1000));
     }
     if (request.params.editors) {
-      request.params.editors.map(function(editorId){
+      request.params.editors.split(',').map(function(editorId){
         ppad.addEditor(parseInt(editorId));
       });
     }
@@ -354,6 +358,7 @@ function render_v1_get_all_users_in_domain_get() {
   pro_accounts.listAllDomainAccounts(apiAccount.domainId).map(function (r) {
     userIdToProfile[pro_accounts.getEncryptedUserId(r.id)] = {
       email:    r.email,
+      uid:      r.id,
       fullName: r.fullName,
       isGuest:  Boolean(pro_accounts.getIsDomainGuest(r)),
     };
@@ -470,6 +475,14 @@ function render_v1_edited_since_get(timestamp) {
   return renderJSON(pads);
 }
 
+function render_v1_pad_add_group_post(localPadId, groupId) {
+  var apiAccount = pro_oauth.getAuthorizedRequestApiAccount();
+
+  pro_groups.addPadToCollection(groupId, localPadId, 0, true);
+
+  return renderJSON({ success: true });
+}
+
 function render_v1_pad_revoke_access_post(localPadId, email) {
   var apiAccount = pro_oauth.getAuthorizedRequestApiAccount();
 
@@ -496,9 +509,9 @@ function render_v1_create_user_post() {
 
   var isDomainGuest = !(request.params.isFullMember == "1");
 
-  var account = pro_oauth.getFullOrApiAccountByEmail(emailToAPIEmail(requireEmailParam()), apiAccount.domainId);
+  var account = pro_oauth.getFullOrApiAccountByEmail((requireEmailParam()), apiAccount.domainId);
   if (!account) {
-    var accountId = pro_accounts.createNewAccount(apiAccount.domainId, request.params.name, emailToAPIEmail(requireEmailParam()), null, false, true, null, isDomainGuest/*isDomainGuest*/, false/*linked*/);
+    var accountId = pro_accounts.createNewAccount(apiAccount.domainId, request.params.name, (requireEmailParam()), null, false, true, null, isDomainGuest/*isDomainGuest*/, false/*linked*/);
     pro_accounts.setAccountDoesNotWantWhatsNew(accountId);
     pro_accounts.setAccountDoesNotWantFollowEmail(accountId);
     account = pro_accounts.getAccountById(accountId);
