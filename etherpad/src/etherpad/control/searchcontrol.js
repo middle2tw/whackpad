@@ -610,7 +610,7 @@ function getPublicPads(start, limit, opts) {
   // get pads with more than two revisions
   // disable this until we change the revision field to use TrieIntField
   // IntField orders lexicographically therefore range queries don't work as expected
-  // filterQueryList.push("revision:[2 TO *]");
+  filterQueryList.push("revision:[2 TO *]");
   filterQueryList.push("guestpolicy:allow");
   if (opts.visibility == "visible") {
     filterQueryList.push("-visibility:hidden");
@@ -635,6 +635,7 @@ function getPublicPads(start, limit, opts) {
   searchParams.size = limit || 100;
   searchParams.from = start || 0;
   searchParams.query = query;
+  searchParams.sort = { lastedit: 'desc' };
   var results = _doSearchQuery(searchParams);
 
   var padObjects = [];
