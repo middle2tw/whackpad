@@ -763,8 +763,12 @@ $(document).ready(function() {
 });
 
 $(window).load(function() {
+  var limit = 13;
+  $("#padlist-inner").on("click", function(){
+    etherpad.pro.padlist.loadMore(this, limit);
+    limit += 20;
+  });
   if ($("#padlist-inner").hasClass("delay-loaded")) {
-    etherpad.pro.padlist.loadMore($("#padlist-inner"), 13);
     $("#padlist-inner").removeClass("delay-loaded");
   }
 })
@@ -808,15 +812,11 @@ etherpad.pro.padlist.loadMore = function(target, howMany) {
         $(target).parents("#padtablecontainer").find("#padtable tbody").append($(data.html).find("tr"));
       }
 
-      var $showMoreBtn = $(data.html).find('div.show-more-btn');
-      if($showMoreBtn.length) {
-        $(target).parents("#padtablecontainer").append($showMoreBtn);
-      }
       $.extend(clientVars.canDelete, data.clientVars.canDelete);
       etherpad.pro.padlist.initStream();
       etherpad.pro.padlist.initPinDragDrop();
       etherpad.pro.padlist.initDragDrop();
-      $(target).remove();
+      $(target).show();
     },
     error: function() {
       $(target).text(oldLinkText).off('hp-loading');
