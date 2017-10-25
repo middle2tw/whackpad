@@ -469,7 +469,7 @@ function renderPadList(padList, columnIds, limit, noSort) {
 
   if (limit && available > limit) {
     var newLimit = Math.min(available, limit+20);
-    o.push(DIV({style:"clear:both; float: left; padding-left:10px", className:"show-more-btn"}, A({href:"#", onclick:"return etherpad.pro.padlist.loadMore(this, "+ newLimit +")"}, "Show more")));
+    o.push(DIV({style:"clear:both; float: left; padding-left:10px", className:"show-more-btn"}, A({href:"#"}, "Show more")));
   }
 
   return o;
@@ -645,7 +645,7 @@ function newRenderPadListStream(pads, limit, areMorePadsAvailable, delayLoad, op
     if (delayLoad) {
       className += " delay-loaded";
     }
-    c.push(DIV({className: className, id:"padlist-inner", style:"clear:both; float: left; padding-left:10px"}, A({href:"#", onclick:"return etherpad.pro.padlist.loadMore(this, "+ newLimit +")"}, "Show more")));
+    c.push(DIV({className: className, id:"padlist-inner", style:"clear:both; float: left; padding-left:10px"}, A({href:"#"}, "Show more")));
   }
 
   return c;
