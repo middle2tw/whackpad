@@ -166,7 +166,7 @@ function searchPads(q, start, limit, optSnippetCnt, optSnippetMaxSize, optAllowN
     }
   };
 
-  if (optFacet) {
+  if (false && optFacet) { // facet is disable on elastic 2.x
     searchParams.facets = {
       hackpad_facet : {
         terms: {
