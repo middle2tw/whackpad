@@ -811,12 +811,15 @@ etherpad.pro.padlist.loadMore = function(target, howMany) {
       } else {
         $(target).parents("#padtablecontainer").find("#padtable tbody").append($(data.html).find("tr"));
       }
-
+      if($(data.html).find("div.show-more-btn").length) {
+        var btn_ctx = $(data.html).find("div.show-more-btn > a");
+        $(target).html(btn_ctx);
+        $(target).show();
+      }
       $.extend(clientVars.canDelete, data.clientVars.canDelete);
       etherpad.pro.padlist.initStream();
       etherpad.pro.padlist.initPinDragDrop();
       etherpad.pro.padlist.initDragDrop();
-      $(target).show();
     },
     error: function() {
       $(target).text(oldLinkText).off('hp-loading');
