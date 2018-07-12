@@ -50,7 +50,7 @@ var formats = {
 //  odt: 'application/vnd.oasis.opendocument.text',
   html: 'text/html; charset=utf-8',
   txt: 'text/plain; charset=utf-8',
-  md : 'text/x-web-markdown',
+  md : 'text/x-web-markdown; charset=utf-8',
   'native' : 'text/html; charset=utf-8',
 }
 
