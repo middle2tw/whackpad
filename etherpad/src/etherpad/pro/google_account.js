@@ -19,6 +19,7 @@ import ("stringutils");
 import ("sync");
 import ("underscore._");
 jimport("java.util.concurrent.ConcurrentHashMap");
+jimport("org.apache.commons.codec.binary.Base64");
 
 
 //----------------------------------------------------------------
@@ -68,7 +69,7 @@ function handleLoginCallback() {
     try {
       var authorization = acquireAuthorizationToken(request.params.code);
       if (authorization) {
-        userInfo = currentUserInfo(authorization.access_token);
+        userInfo = JSON.parse("" + new java.lang.String(Base64.decodeBase64(authorization.id_token.split('.')[1])));
       }
     } catch (e) {
       log.logException(e);
@@ -78,14 +79,12 @@ function handleLoginCallback() {
   }
 
   if (userInfo) {
-    var accountEmail = userInfo.emails.filter(function(em) {
-      return em.type == "account";
-    });
+    var accountEmail = userInfo.email;
 
     if (accountEmail) {
-      var emailAddress = accountEmail[0].value;
+      var emailAddress = accountEmail;
       log.custom("google-oauth2", "Trying to sign in as " + emailAddress + " " +accountEmail.length);
-      var signedInAccount = account_control.completeGoogleSignIn(emailAddress, userInfo.displayName, "/ep/account/sign-in?cont=" + state.shortContUrl);
+      var signedInAccount = account_control.completeGoogleSignIn(emailAddress, userInfo.name, "/ep/account/sign-in?cont=" + state.shortContUrl);
 
       if (!signedInAccount) {
         response.redirect("/");
@@ -95,8 +94,8 @@ function handleLoginCallback() {
       sessions.getSession().isGoogleConnected = true;
 
       reloadGoogleContactsAsync(signedInAccount);
-      if (userInfo.image) {
-        reloadGooglePhotoAsync(signedInAccount, userInfo.image.url);
+      if (userInfo.picture) {
+        reloadGooglePhotoAsync(signedInAccount, userInfo.picture);
       }
 
       response.redirect(state.shortContUrl || "/");
@@ -255,7 +254,7 @@ function clientSecret() {
 }
 
 function clientDetails() {
-  return {token_uri :  "https://accounts.google.com/o/oauth2/token",
+  return {token_uri :  "https://www.googleapis.com/oauth2/v4/token",
           auth_uri : "https://accounts.google.com/o/oauth2/auth",
           client_secret: appjet.config.googleClientSecret,
           client_id: appjet.config.googleClientId};
